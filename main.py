@@ -203,10 +203,10 @@ def main():
     """
     # 动态获取cookie_str
     while True:
-        cookie_str = input("请输入您的cookie_str（不可为空，例如 'ipb_member_id=xxx; ipb_pass_hash=xxx'）: ").strip()
+        cookie_str = input("请输入cookie（不可为空，例如 'ipb_member_id=xxx; ipb_pass_hash=xxx'）: ").strip()
         if cookie_str:
             break
-        print("cookie_str不可为空，请重新输入。")
+        print("cookie不可为空，请重新输入。")
 
     try:
         # 将cookie字符串转换为字典
@@ -217,7 +217,7 @@ def main():
 
     # 动态获取batch_size
     while True:
-        batch_size_input = input("请输入batch_size（每批次处理的请求链接数量，默认25）: ").strip()
+        batch_size_input = input("请输入每批次处理的请求链接数量，默认25: ").strip()
         if not batch_size_input:
             batch_size = 25
             break
@@ -227,11 +227,11 @@ def main():
                 raise ValueError
             break
         except ValueError:
-            print("batch_size的值必须是正整数，请重新输入。")
+            print("值必须是正整数，请重新输入。")
 
     # 动态获取thread_count
     while True:
-        thread_count_input = input("请输入thread_count（多线程数量，默认4）: ").strip()
+        thread_count_input = input("请输入多线程数量，默认4: ").strip()
         if not thread_count_input:
             thread_count = 4
             break
@@ -241,11 +241,11 @@ def main():
                 raise ValueError
             break
         except ValueError:
-            print("thread_count的值必须是正整数，请重新输入。")
+            print("值必须是正整数，请重新输入。")
 
     # 动态获取max_sequential_requests
     while True:
-        max_sequential_requests_input = input("请输入max_sequential_requests（每处理*批次后就暂停，默认4）: ").strip()
+        max_sequential_requests_input = input("每处理*批次后就暂停，默认4: ").strip()
         if not max_sequential_requests_input:
             max_sequential_requests = 4
             break
@@ -255,11 +255,11 @@ def main():
                 raise ValueError
             break
         except ValueError:
-            print("max_sequential_requests的值必须是正整数，请重新输入。")
+            print("值必须是正整数，请重新输入。")
 
     # 动态获取wait_time
     while True:
-        wait_time_input = input("请输入wait_time（每*批次处理后暂停的秒数，默认5）: ").strip()
+        wait_time_input = input("请输入每*批次处理后暂停的秒数，默认5: ").strip()
         if not wait_time_input:
             wait_time = 5
             break
@@ -269,7 +269,7 @@ def main():
                 raise ValueError
             break
         except ValueError:
-            print("wait_time必须是非负整数，请重新输入。")
+            print("必须是非负整数，请重新输入。")
 
     # 初始URL
     url = "https://exhentai.org/favorites.php"
