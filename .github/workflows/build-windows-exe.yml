@@ -1,41 +1,42 @@
-name: Build and Release Windows Executable
+name: 构建并发布 Windows 可执行文件
 
 on:
   push:
     branches:
-      - main  # 每次推送到 main 分支时触发
+      - main
 
 jobs:
   build:
-    runs-on: windows-latest  # 使用 Windows 环境编译 .exe
+    runs-on: windows-latest
+    permissions:
+      contents: write  # 授予写入权限，用于创建 Release 和推送标签
     steps:
       # 检出代码
-      - name: Checkout code
+      - name: 检出代码
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整 Git 历史以便读取标签
 
       # 设置 Python 环境
-      - name: Set up Python
+      - name: 设置 Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'  # 指定 Python 版本
+          python-version: '3.10'
 
       # 安装依赖
-      - name: Install dependencies
+      - name: 安装依赖
         run: |
           python -m pip install --upgrade pip
           pip install pyinstaller
           pip install -r requirements.txt
 
-      # 使用 PyInstaller 编译为 .exe
-      - name: Build executable with PyInstaller
+      # 使用 PyInstaller 打包为 .exe
+      - name: 使用 PyInstaller 打包
         run: |
-          pyinstaller --onefile --name ExHentaiFavorites main.py
-        # --onefile: 打包为单个 .exe 文件
-        # --name: 指定输出文件名
-        # main.py: 您的主脚本文件名
+          pyinstaller --onefile --name ExHentaiFavorites --console main.py
 
-      # 获取当前版本号并递增
-      - name: Generate version number
+      # 生成版本号
+      - name: 生成版本号
         id: version
         run: |
           $current_tag = git tag --sort=-v:refname | Select-Object -First 1
@@ -47,17 +48,25 @@ jobs:
             $new_tag = "v$($version_numbers[0]).$($version_numbers[1]).$patch"
           }
           echo "NEW_TAG=$new_tag" >> $env:GITHUB_OUTPUT
-        shell: pwsh  # 使用 PowerShell 脚本生成版本号
+        shell: pwsh
 
-      # 创建 GitHub Release 并上传 .exe
-      - name: Create GitHub Release
+      # 创建并推送标签
+      - name: 创建并推送标签
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag ${{ steps.version.outputs.NEW_TAG }}
+          git push origin ${{ steps.version.outputs.NEW_TAG }}
+
+      # 创建 GitHub Release
+      - name: 创建 GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.NEW_TAG }}
           name: Release ${{ steps.version.outputs.NEW_TAG }}
-          body: Automated release for ExHentaiFavorites
+          body: 自动为 ExHentaiFavorites 创建的 Release
           draft: false
           prerelease: false
-          files: dist/ExHentaiFavorites.exe  # 上传编译好的 .exe 文件
+          files: dist/ExHentaiFavorites.exe
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用默认的 GITHUB_TOKEN
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
