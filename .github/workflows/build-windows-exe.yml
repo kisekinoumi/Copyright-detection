@@ -1,53 +1,63 @@
-name: Build and Release EXE
+name: Build and Release Windows Executable
 
 on:
   push:
     branches:
-      - main # 或者您的主分支名称，例如 master
+      - main  # 每次推送到 main 分支时触发
 
 jobs:
   build:
-    runs-on: windows-latest # 指定在 Windows 环境运行
-
+    runs-on: windows-latest  # 使用 Windows 环境编译 .exe
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4 # 检出您的仓库代码
+      # 检出代码
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v5 # 设置 Python 环境
-      with:
-        python-version: '3.x' # 您可以指定具体的 Python 版本，例如 '3.9'
+      # 设置 Python 环境
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'  # 指定 Python 版本
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller requests beautifulsoup4
-        # 如果您有 requirements.txt 文件，可以替换为:
-        # pip install -r requirements.txt
-        # pip install pyinstaller
-      shell: bash # 明确指定使用 bash shell 来执行 run 命令
+      # 安装依赖
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyinstaller
+          pip install -r requirements.txt
 
-    - name: Build executable with PyInstaller
-      run: pyinstaller --name ExHentaiChecker --onefile your_script_name.py
-      # --name: 指定输出的 exe 文件名 (不含 .exe 后缀)
-      # --onefile: 将所有依赖打包进单个 exe 文件
-      # your_script_name.py: 将这里替换成您的 Python 脚本文件名
-      shell: bash
+      # 使用 PyInstaller 编译为 .exe
+      - name: Build executable with PyInstaller
+        run: |
+          pyinstaller --onefile --name ExHentaiFavorites main.py
+        # --onefile: 打包为单个 .exe 文件
+        # --name: 指定输出文件名
+        # main.py: 您的主脚本文件名
 
-    - name: Generate Release Tag
-      id: tag_generator
-      run: echo "tag_name=release-$(git rev-parse --short HEAD)" >> $env:GITHUB_ENV
-      # 使用当前 commit 的短 SHA 作为标签的一部分，确保唯一性
-      shell: bash
+      # 获取当前版本号并递增
+      - name: Generate version number
+        id: version
+        run: |
+          $current_tag = git tag --sort=-v:refname | Select-Object -First 1
+          if (-not $current_tag) {
+            $new_tag = "v1.0.0"
+          } else {
+            $version_numbers = $current_tag -replace '^v', '' -split '\.'
+            $patch = [int]$version_numbers[2] + 1
+            $new_tag = "v$($version_numbers[0]).$($version_numbers[1]).$patch"
+          }
+          echo "NEW_TAG=$new_tag" >> $env:GITHUB_OUTPUT
+        shell: pwsh  # 使用 PowerShell 脚本生成版本号
 
-    - name: Create Release and Upload Asset
-      uses: softprops/action-gh-release@v2 # 使用社区提供的 action 来创建 Release
-      with:
-        tag_name: ${{ env.tag_name }} # 使用上一步生成的标签
-        name: "Release ${{ env.tag_name }}" # Release 的标题
-        files: dist/ExHentaiChecker.exe # 指定要上传的文件路径 (PyInstaller 默认输出到 dist 目录)
-        draft: false # 设置为 false 直接发布，true 则创建草稿 Release
-        prerelease: false # 设置为 false 标记为正式版，true 标记为预发布版
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用 GitHub 自动提供的 Token 进行认证
-```
+      # 创建 GitHub Release 并上传 .exe
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.NEW_TAG }}
+          name: Release ${{ steps.version.outputs.NEW_TAG }}
+          body: Automated release for ExHentaiFavorites
+          draft: false
+          prerelease: false
+          files: dist/ExHentaiFavorites.exe  # 上传编译好的 .exe 文件
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # 使用默认的 GITHUB_TOKEN
