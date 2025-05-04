@@ -315,6 +315,10 @@ def main():
 
     if not recorded_links:
         print("没有符合条件的链接被记录，程序结束")
+        while True:
+            user_input = input("请输入 'exit' 以结束程序: ")
+            if user_input.lower() == "exit":
+                break
         return
 
     # 多线程处理recorded_links，调用API获取thumb和title_jpn
