@@ -215,33 +215,61 @@ def main():
         print(f"cookie解析失败: {e}")
         return
 
-    # 动态获取api_batch_size
+    # 动态获取batch_size
     while True:
-        api_batch_size_input = input("请输入api_batch_size（每次API请求处理的链接数量，默认25）: ").strip()
-        if not api_batch_size_input:
-            api_batch_size = 25
+        batch_size_input = input("请输入batch_size（每批次请求处理的链接数量，默认25）: ").strip()
+        if not batch_size_input:
+            batch_size = 25
             break
         try:
-            api_batch_size = int(api_batch_size_input)
-            if api_batch_size <= 0:
+            batch_size = int(batch_size_input)
+            if batch_size <= 0:
                 raise ValueError
             break
         except ValueError:
-            print("api_batch_size的值必须是正整数，请重新输入。")
+            print("batch_size的值必须是正整数，请重新输入。")
 
-    # 动态获取api_wait_time
+    # 动态获取thread_count
     while True:
-        api_wait_time_input = input("请输入api_wait_time（每处理一定数量批次后暂停的秒数，默认5）: ").strip()
-        if not api_wait_time_input:
-            api_wait_time = 5
+        thread_count_input = input("请输入thread_count（多线程数量，默认4）: ").strip()
+        if not thread_count_input:
+            thread_count = 4
             break
         try:
-            api_wait_time = int(api_wait_time_input)
-            if api_wait_time < 0:
+            thread_count = int(thread_count_input)
+            if thread_count <= 0:
                 raise ValueError
             break
         except ValueError:
-            print("api_wait_time必须是非负整数，请重新输入。")
+            print("thread_count的值必须是正整数，请重新输入。")
+
+    # 动态获取max_sequential_requests
+    while True:
+        max_sequential_requests_input = input("请输入max_sequential_requests（每处理*批次后就暂停，默认4）: ").strip()
+        if not max_sequential_requests_input:
+            max_sequential_requests = 4
+            break
+        try:
+            max_sequential_requests = int(max_sequential_requests_input)
+            if max_sequential_requests <= 0:
+                raise ValueError
+            break
+        except ValueError:
+            print("max_sequential_requests的值必须是正整数，请重新输入。")
+
+    # 动态获取wait_time
+    while True:
+        wait_time_input = input("请输入wait_time（每*批次处理后暂停的秒数，默认5）: ").strip()
+        if not wait_time_input:
+            wait_time = 5
+            break
+        try:
+            wait_time = int(wait_time_input)
+            if wait_time < 0:
+                raise ValueError
+            break
+        except ValueError:
+            print("wait_time必须是非负整数，请重新输入。")
 
     # 初始URL
     url = "https://exhentai.org/favorites.php"
@@ -271,10 +299,6 @@ def main():
     # 多线程请求all_links中的链接，筛选recorded_links
     recorded_links = []
     lock = threading.Lock()
-    batch_size = 25
-    thread_count = 4
-    max_sequential_requests = 4
-    wait_time = 5
 
     for i in range(0, len(all_links), batch_size):
         batch = all_links[i:i + batch_size]
@@ -296,8 +320,6 @@ def main():
     # 多线程处理recorded_links，调用API获取thumb和title_jpn
     result_list = []
     api_lock = threading.Lock()
-    api_thread_count = 4
-    api_max_sequential_requests = 4
 
     def process_api_batch(batch):
         """
@@ -315,18 +337,18 @@ def main():
         if response:
             process_api_response(response, batch, result_list, api_lock)
 
-    # 将recorded_links按api_batch_size分割并多线程处理
-    batches = [recorded_links[i:i + api_batch_size] for i in range(0, len(recorded_links), api_batch_size)]
+    # 将recorded_links按batch_size分割并多线程处理
+    batches = [recorded_links[i:i + batch_size] for i in range(0, len(recorded_links), batch_size)]
     batch_count = len(batches)
 
-    with ThreadPoolExecutor(max_workers=api_thread_count) as executor:
+    with ThreadPoolExecutor(max_workers=thread_count) as executor:
         for idx, batch in enumerate(batches):
             print(f"正在处理API批次 {idx + 1}/{batch_count}，包含 {len(batch)} 个链接")
             executor.submit(process_api_batch, batch)
 
-            if (idx + 1) % api_max_sequential_requests == 0 and (idx + 1) < batch_count:
-                print(f"已处理 {api_max_sequential_requests} 个API批次，暂停 {api_wait_time} 秒")
-                time.sleep(api_wait_time)
+            if (idx + 1) % max_sequential_requests == 0 and (idx + 1) < batch_count:
+                print(f"已处理 {max_sequential_requests} 个API批次，暂停 {wait_time} 秒")
+                time.sleep(wait_time)
             else:
                 print(f"API批次 {idx + 1} 提交完成")
 
