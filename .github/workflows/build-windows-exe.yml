@@ -64,7 +64,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.NEW_TAG }}
           name: Release ${{ steps.version.outputs.NEW_TAG }}
-          body: 自动为 ExHentaiFavorites 创建的 Release
+          body: 自动创建的 Release
           draft: false
           prerelease: false
           files: dist/ExHentaiFavorites.exe
