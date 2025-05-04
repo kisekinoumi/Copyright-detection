@@ -217,7 +217,7 @@ def main():
 
     # 动态获取batch_size
     while True:
-        batch_size_input = input("请输入batch_size（每批次请求处理的链接数量，默认25）: ").strip()
+        batch_size_input = input("请输入batch_size（每批次处理的请求链接数量，默认25）: ").strip()
         if not batch_size_input:
             batch_size = 25
             break
