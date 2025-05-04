@@ -1,4 +1,4 @@
-# ExHentai 失效收藏查找器 (精简版)
+# ExHentai 失效收藏查找器
 
 该 Python 脚本扫描您的 ExHentai 收藏夹，查找失效或不可访问的画廊链接，并尝试通过 E-Hentai API 获取这些画廊的日文标题 (`title_jpn`) 和缩略图 (`thumb`)，最后将结果保存到 `result.md` 文件。
 
